@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>May2Pay Expense Tracker</title>
+
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="May2Pay" />
+  <meta name="description" content="Track your expenses manually" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    /* Global */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a0a0a;
+      margin: 0;
+      padding: 0;
+      color: #f5f5f5;
+      line-height: 1.6;
+    }
+
+    /* Intro splash */
+    .intro {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #000;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .intro-title {
+      font-size: 3.5rem;
+      margin-bottom: 2rem;
+      animation: fadeInOut 3s forwards;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    .language-display {
+      height: 80px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .language-item {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      opacity: 0;
+      font-size: 2.2rem;
+      animation: slideInOut 18s infinite;
+      padding: 0.5rem;
+    }
+
+    .language-item:nth-child(1) { animation-delay: 0s; }
+    .language-item:nth-child(2) { animation-delay: 3s; }
+    .language-item:nth-child(3) { animation-delay: 6s; }
+    .language-item:nth-child(4) { animation-delay: 9s; }
+    .language-item:nth-child(5) { animation-delay: 12s; }
+    .language-item:nth-child(6) { animation-delay: 15s; }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: scale(0.8); }
+      20% { opacity: 1; transform: scale(1); }
+      80% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.2); }
+    }
+
+    @keyframes slideInOut {
+      0% { opacity: 0; transform: translateY(60px); }
+      10% { opacity: 1; transform: translateY(0); }
+      20% { opacity: 1; transform: translateY(0); }
+      30% { opacity: 0; transform: translateY(-60px); }
+      100% { opacity: 0; transform: translateY(-60px); }
+    }
+
+    /* Container */
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 16px;
+      display: none;
+    }
+
+    /* Header */
+    .header {
+      background: #1a1a1a;
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.05);
+      margin-bottom: 20px;
+      border: 1px solid #333;
+    }
+
+    .header-title {
+      font-size: 1.8em;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .total-amount {
+      font-size: 2.2em;
+      text-align: center;
+      font-weight: 600;
+      margin: 15px 0;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .date-selector {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .date-input {
+      font-size: 1em;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      outline: none;
+      background: #0a0a0a;
+      color: #fff;
+      width: 60%;
+    }
+
+    .month-total {
+      font-weight: 500;
+      font-size: 1.1em;
+      background: #333;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    /* Notification */
+    .notification-permission {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #333;
+    }
+
+    .permission-btn {
+      background-color: #333;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      transition: 0.3s;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .permission-btn:hover {
+      background-color: #444;
+    }
+
+    /* Add transaction */
+    .add-transaction {
+      margin: 20px 0;
+    }
+
+    .add-button {
+      width: 100%;
+      background-color: #1a1a1a;
+      color: white;
+      padding: 16px;
+      border: 1px solid #333;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .add-button:hover {
+      background-color: #222;
+    }
+
+    .add-form {
+      display: none;
+      flex-direction: column;
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.05);
+      margin-top: 12px;
+      border: 1px solid #333;
+    }
+
+    .add-form.active {
+      display: flex;
+    }
+
+    .input {
+      margin-bottom: 15px;
+      padding: 14px;
+      font-size: 1em;
+      border: 1px solid #333;
+      border-radius: 8px;
+      outline: none;
+      background: #0a0a0a;
+      color: #fff;
+    }
+
+    .input:focus {
+      border-color: #666;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 14px;
+      flex: 1;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .btn-primary:hover {
+      background-color: #444;
+    }
+
+    .btn-secondary {
+      background-color: #1a1a1a;
+      color: white;
+      border: 1px solid #333;
+      padding: 14px;
+      flex: 1;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background-color: #222;
+    }
+
+    /* Transaction card */
+    .transaction-card {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
+      transition: transform 0.2s;
+      border: 1px solid #333;
+    }
+
+    .transaction-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .transaction-info {
+      flex: 1;
+    }
+
+    .transaction-merchant {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+
+    .transaction-item {
+      color: #ccc;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+
+    .transaction-time {
+      color: #888;
+      font-size: 0.8em;
+    }
+
+    .transaction-amount {
+      font-weight: bold;
+      color: #fff;
+      text-align: right;
+      font-size: 1.2em;
+    }
+
+    .transaction-amount button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 1em;
+      color: #888;
+      transition: color 0.3s;
+    }
+
+    .transaction-amount button:hover {
+      color: #ff4444;
+    }
+
+    /* Stats */
+    .stats-card {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
+      border: 1px solid #333;
+    }
+
+    .stats-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 0;
+      font-size: 1.1em;
+      font-weight: 500;
+    }
+
+    .download-btn {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      margin-top: 15px;
+      transition: background 0.3s;
+    }
+
+    .download-btn:hover {
+      background-color: #444;
+    }
+
+    /* History Section */
+    .history-section {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      border: 1px solid #333;
+    }
+
+    .history-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .history-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .history-select {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #0a0a0a;
+      color: white;
+    }
+
+    .history-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-date {
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .history-amount {
+      color: #fff;
+    }
+
+    .history-count {
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    /* Install Banner */
+    .install-banner {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      background-color: #1a1a1a;
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+      border: 1px solid #333;
+      z-index: 100;
+    }
+
+    .install-btn {
+      background-color: #333;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      transition: background 0.3s;
+    }
+
+    .install-btn:hover {
+      background-color: #444;
+    }
+
+    .dismiss-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 1.2em;
+      color: #888;
+      background: #1a1a1a;
+      border-radius: 12px;
+      margin: 20px 0;
+      border: 1px solid #333;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding: 20px;
+      color: #888;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="intro" id="introScreen">
+    <div class="intro-title">May2Pay</div>
+    <div class="language-display">
+      <div class="language-item">May2Pay</div>
+      <div class="language-item">मय2पे</div>
+      <div class="language-item">ময়2পে</div>
+      <div class="language-item">മെയ്2പേ</div>
+      <div class="language-item">မေ2ပေး</div>
+      <div class="language-item">May2Pay</div>
+    </div>
+  </div>
+
+  <div class="container" id="mainApp">
+    <div class="header">
+      <div class="header-title">May2Pay Expense Tracker</div>
+      <div class="total-amount" id="todayTotal">₹0.00</div>
+
+      <div class="date-selector">
+        <input type="date" class="date-input" id="dateSelector" />
+        <div class="month-total" id="monthTotal">Month: ₹0.00</div>
+      </div>
+    </div>
+
+    <div class="notification-permission" id="notificationPrompt">
+      <p>Enable notifications to get alerts for new expenses!</p>
+      <button class="permission-btn" onclick="requestNotificationPermission()">🔔 Enable Notifications</button>
+    </div>
+
+    <div class="add-transaction">
+      <button class="add-button" id="addButton" onclick="toggleAddForm()">➕ Add Manual Transaction</button>
+
+      <div class="add-form" id="addForm">
+        <input type="text" class="input" id="merchantInput" placeholder="Merchant Name" />
+        <input type="number" class="input" id="amountInput" placeholder="Amount (₹)" step="0.01" />
+        <input type="text" class="input" id="itemInput" placeholder="Item Description" />
+        <input type="time" class="input" id="timeInput" />
+
+        <div class="form-buttons">
+          <button class="btn-primary" onclick="addTransaction()">Add</button>
+          <button class="btn-secondary" onclick="toggleAddForm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="transactionsList"></div>
+
+    <div class="stats-card">
+      <div class="stats-title">Today's Summary</div>
+      <div class="stats-row">
+        <span>Transactions:</span>
+        <span id="transactionCount">0</span>
+      </div>
+      <div class="stats-row">
+        <span>Total Spent:</span>
+        <span id="totalSpent">₹0.00</span>
+      </div>
+      <div class="stats-row">
+        <span>Average per Transaction:</span>
+        <span id="averageSpent">₹0.00</span>
+      </div>
+      <button class="download-btn" onclick="downloadSummary()">📥 Download Summary</button>
+    </div>
+
+    <div class="history-section">
+      <div class="history-title">Transaction History</div>
+      <div class="history-controls">
+        <select class="history-select" id="historyRange" onchange="updateHistory()">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+          <option value="all">All time</option>
+        </select>
+        <button class="btn-primary" onclick="downloadHistory()">📥 Download</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="install-banner hidden" id="installBanner">
+      <span>Add to home screen for easy access</span>
+      <button class="install-btn" onclick="installPWA()">Install</button>
+      <button class="dismiss-btn" onclick="dismissInstallBanner()">✕</button>
+    </div>
+
+    <div class="footer">
+      May2Pay &copy; 2023 • Track your expenses seamlessly
+    </div>
+  </div>
+
+  <script>
+    let transactions = [];
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let deferredPrompt;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Show intro for 18 seconds (time for all languages to display)
+      setTimeout(() => {
+        document.getElementById('introScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        loadTransactions();
+        setupDateSelector();
+        updateDisplay();
+        updateHistory();
+        
+        // Check if notification prompt was already dismissed
+        if (localStorage.getItem('notificationPromptDismissed') === 'true') {
+          document.getElementById('notificationPrompt').style.display = 'none';
+        }
+      }, 18000);
+    });
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBanner').classList.remove('hidden');
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((result) => {
+          if (result.outcome === 'accepted') console.log('App installed');
+          deferredPrompt = null;
+          dismissInstallBanner();
+        });
+      }
+    }
+
+    function dismissInstallBanner() {
+      document.getElementById('installBanner').classList.add('hidden');
+    }
+
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            new Notification('Notifications enabled! You will now receive alerts for new expenses.');
+          }
+          localStorage.setItem('notificationPromptDismissed', 'true');
+          document.getElementById('notificationPrompt').style.display = 'none';
+        });
+      }
+    }
+
+    function setupDateSelector() {
+      const dateSelector = document.getElementById('dateSelector');
+      dateSelector.value = selectedDate;
+      dateSelector.addEventListener('change', function () {
+        selectedDate = this.value;
+        updateDisplay();
+      });
+    }
+
+    function toggleAddForm() {
+      const form = document.getElementById('addForm');
+      form.classList.toggle('active');
+    }
+
+    function addTransaction() {
+      const merchant = document.getElementById('merchantInput').value.trim();
+      const amount = parseFloat(document.getElementById('amountInput').value);
+      const itemName = document.getElementById('itemInput').value.trim() || merchant;
+      const time = document.getElementById('timeInput').value || new Date().toTimeString().substring(0, 5);
+
+      if (!merchant || !amount || amount <= 0) {
+        alert('Please enter a valid merchant name and amount');
+        return;
+      }
+
+      transactions.push({
+        id: Date.now(),
+        merchant,
+        amount,
+        itemName,
+        time,
+        date: selectedDate,
+        type: 'manual'
+      });
+
+      saveTransactions();
+      updateDisplay();
+      updateHistory();
+      toggleAddForm();
+      
+      // Clear form
+      document.getElementById('merchantInput').value = '';
+      document.getElementById('amountInput').value = '';
+      document.getElementById('itemInput').value = '';
+      document.getElementById('timeInput').value = '';
+    }
+
+    function loadTransactions() {
+      const stored = localStorage.getItem('expense-transactions');
+      transactions = stored ? JSON.parse(stored) : [];
+      
+      // Add sample data if empty
+      if (transactions.length === 0) {
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        transactions = [
+          { id: 1, merchant: "Coffee Shop", amount: 250, itemName: "Cappuccino", time: "09:30", date: today, type: "manual" },
+          { id: 2, merchant: "Supermarket", amount: 1250, itemName: "Groceries", time: "13:45", date: today, type: "manual" },
+          { id: 3, merchant: "Book Store", amount: 599, itemName: "Programming Book", time: "16:20", date: today, type: "manual" },
+          { id: 4, merchant: "Restaurant", amount: 850, itemName: "Dinner", time: "19:30", date: yesterdayStr, type: "manual" },
+          { id: 5, merchant: "Transport", amount: 320, itemName: "Cab fare", time: "08:15", date: yesterdayStr, type: "manual" }
+        ];
+        saveTransactions();
+      }
+    }
+
+    function saveTransactions() {
+      localStorage.setItem('expense-transactions', JSON.stringify(transactions));
+    }
+
+    function getFilteredTransactions() {
+      return transactions.filter(t => t.date === selectedDate);
+    }
+
+    function updateTotals() {
+      const filtered = getFilteredTransactions();
+      const dayTotal = filtered.reduce((sum, t) => sum + t.amount, 0);
+      const currentMonth = selectedDate.slice(0, 7);
+      const monthTotal = transactions
+        .filter(t => t.date.startsWith(currentMonth))
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      document.getElementById('todayTotal').textContent = `₹${dayTotal.toFixed(2)}`;
+      document.getElementById('monthTotal').textContent = `Month: ₹${monthTotal.toFixed(2)}`;
+    }
+
+    function updateTransactionsList() {
+      const list = document.getElementById('transactionsList');
+      const filtered = getFilteredTransactions();
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">No transactions for this date. Add one using the button above.</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => `
+        <div class="transaction-card">
+          <div class="transaction-info">
+            <div class="transaction-merchant">${t.merchant}</div>
+            <div class="transaction-item">${t.itemName}</div>
+            <div class="transaction-time">${t.time}</div>
+          </div>
+          <div class="transaction-amount">
+            ₹${t.amount.toFixed(2)}
+            <button onclick="deleteTransaction(${t.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteTransaction(id) {
+      if (confirm('Are you sure you want to delete this transaction?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        saveTransactions();
+        updateDisplay();
+        updateHistory();
+      }
+    }
+
+    function updateStats() {
+      const filtered = getFilteredTransactions();
+      const total = filtered.reduce((sum, t) => sum + t.amount, 0);
+      const count = filtered.length;
+      const average = count ? total / count : 0;
+
+      document.getElementById('transactionCount').textContent = count;
+      document.getElementById('totalSpent').textContent = `₹${total.toFixed(2)}`;
+      document.getElementById('averageSpent').textContent = `₹${average.toFixed(2)}`;
+    }
+
+    function updateDisplay() {
+      updateTotals();
+      updateTransactionsList();
+      updateStats();
+    }
+
+    function updateHistory() {
+      const range = document.getElementById('historyRange').value;
+      const historyList = document.getElementById('historyList');
+      
+      // Group transactions by date
+      const grouped = {};
+      transactions.forEach(t => {
+        if (!grouped[t.date]) {
+          grouped[t.date] = {
+            total: 0,
+            count: 0,
+            transactions: []
+          };
+        }
+        grouped[t.date].total += t.amount;
+        grouped[t.date].count++;
+        grouped[t.date].transactions.push(t);
+      });
+      
+      // Sort dates in descending order
+      const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+      
+      // Filter by selected range
+      const now = new Date();
+      let filteredDates = sortedDates;
+      
+      if (range !== 'all') {
+        const days = parseInt(range);
+        const cutoffDate = new Date(now);
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        
+        filteredDates = sortedDates.filter(date => {
+          return new Date(date) >= cutoffDate;
+        });
+      }
+      
+      if (filteredDates.length === 0) {
+        historyList.innerHTML = `<div class="empty-state">No transactions in this period</div>`;
+        return;
+      }
+      
+      historyList.innerHTML = filteredDates.map(date => `
+        <div class="history-item" onclick="viewDate('${date}')">
+          <div>
+            <div class="history-date">${formatDate(date)}</div>
+            <div class="history-count">${grouped[date].count} transactions</div>
+          </div>
+          <div class="history-amount">₹${grouped[date].total.toFixed(2)}</div>
+        </div>
+      `).join('');
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-IN', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+    
+    function viewDate(date) {
+      document.getElementById('dateSelector').value = date;
+      selectedDate = date;
+      updateDisplay();
+    }
+
+    function downloadSummary() {
+      const filtered = getFilteredTransactions();
+      const total = filtered.reduce((sum, t) => sum + t.amount, 0);
+      const count = filtered.length;
+      const average = count ? total / count : 0;
+      
+      const date = new Date(selectedDate);
+      const formattedDate = date.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      let csvContent = "May2Pay Expense Summary\n";
+      csvContent += `Date: ${formattedDate}\n\n`;
+      csvContent += "Transactions,Total Spent,Average per Transaction\n";
+      csvContent += `${count},₹${total.toFixed(2)},₹${average.toFixed(2)}\n\n`;
+      csvContent += "Merchant,Item,Amount,Time\n";
+      
+      filtered.forEach(t => {
+        csvContent += `"${t.merchant}","${t.itemName}",${t.amount.toFixed(2)},${t.time}\n`;
+      });
+      
+      downloadFile(csvContent, `May2Pay-Summary-${selectedDate}.csv`, 'text/csv');
+    }
+    
+    function downloadHistory() {
+      const range = document.getElementById('historyRange').value;
+      const rangeText = document.getElementById('historyRange').options[document.getElementById('historyRange').selectedIndex].text;
+      
+      // Group transactions by date
+      const grouped = {};
+      transactions.forEach(t => {
+        if (!grouped[t.date]) {
+          grouped[t.date] = {
+            total: 0,
+            count: 0,
+            transactions: []
+          };
+        }
+        grouped[t.date].total += t.amount;
+        grouped[t.date].count++;
+        grouped[t.date].transactions.push(t);
+      });
+      
+      // Sort dates in descending order
+      const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+      
+      // Filter by selected range
+      const now = new Date();
+      let filteredDates = sortedDates;
+      
+      if (range !== 'all') {
+        const days = parseInt(range);
+        const cutoffDate = new Date(now);
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        
+        filteredDates = sortedDates.filter(date => {
+          return new Date(date) >= cutoffDate;
+        });
+      }
+      
+      let csvContent = "May2Pay Transaction History\n";
+      csvContent += `Period: ${rangeText}\n`;
+      csvContent += `Generated: ${new Date().toLocaleString('en-IN')}\n\n`;
+      csvContent += "Date,Transactions,Total Amount\n";
+      
+      filteredDates.forEach(date => {
+        csvContent += `${formatDate(date)},${grouped[date].count},₹${grouped[date].total.toFixed(2)}\n`;
+      });
+      
+      csvContent += "\n\nDetailed Transactions\n";
+      csvContent += "Date,Merchant,Item,Amount,Time\n";
+      
+      filteredDates.forEach(date => {
+        grouped[date].transactions.forEach(t => {
+          csvContent += `${date},"${t.merchant}","${t.itemName}",${t.amount.toFixed(2)},${t.time}\n`;
+        });
+      });
+      
+      downloadFile(csvContent, `May2Pay-History-${rangeText.replace(' ', '-')}.csv`, 'text/csv');
+    }
+    
+    function downloadFile(content, fileName, contentType) {
+      const blob = new Blob([content], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
